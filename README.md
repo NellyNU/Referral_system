@@ -1,3 +1,53 @@
+# Referral System
+
+## Installation and Setup
+
+1. Clone the repository
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. Set up the PostgreSQL database
+4. Create migrations:
+   ```
+   python manage.py makemigrations
+   python manage.py migrate
+   ```
+
+5. Start the server:
+   ```
+   python manage.py runserver
+   ```
+
+## API Endpoints
+
+### Phone Authorization
+
+1. **Send Code**
+   - URL: `/api/users/auth/phone/`
+   - Method: POST
+   - Parameters: `phone_number`
+
+2. **Verify Code**
+   - URL: `/api/users/auth/verify/`
+   - Method: POST
+   - Parameters: `phone_number`, `code`
+
+### User Profile
+
+1. **Get Profile**
+   - URL: `/api/users/profile/`
+   - Method: GET
+   - Authorization Required
+
+## API Documentation
+
+Swagger: `/swagger/`  
+ReDoc: `/redoc/`
+
+
+
 # Система Рефералов
 
 ## Установка и запуск
