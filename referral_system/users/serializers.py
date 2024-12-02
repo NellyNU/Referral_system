@@ -13,10 +13,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['phone_number','invited_code','activated_invited_code','invited_users']
+        fields = ['phone_number', 'invite_code', 'activated_invite_code', 'invited_users'] 
 
-    def get_invited_users(self,obj):
+    def get_invited_users(self, obj):
         return [user.phone_number for user in obj.get_invited_users()]
 
 class InviteActivationSerializer(serializers.Serializer):
-    invited_code = serializers.CharField(max_length=6)
+    invite_code = serializers.CharField(max_length=6) 

@@ -4,12 +4,10 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import login
 import random
-import time
 from django.core.cache import cache
-from .models import User, AuthCode
-from.serializers import PhoneAuthSerializer, AuthCodeVerifySerializer, UserProfileSerializer,InviteActivationSerializer
+from .models import User
+from .serializers import PhoneAuthSerializer, AuthCodeVerifySerializer, UserProfileSerializer, InviteActivationSerializer
 
-# Create your views here.
 
 class PhoneAuthView(APIView):
     def post(self, request):
@@ -17,10 +15,12 @@ class PhoneAuthView(APIView):
         if serializer.is_valid():
             phone_number = serializer.validated_data['phone_number']
 
-            auth_code = str(random.randint(1000,9999))
-            cache.set(f'auth_code_{phone_number}', auth_code , 180)
+            auth_code = str(random.randint(1000, 9999))
+            cache.set(f'auth_code_{phone_number}', auth_code, timeout=300)
+
             print(f"Код авторизации для {phone_number}: {auth_code}")
-            return Response({'message': 'Код отправлен'}, status=status.HTTP_200_OK)
+            return Response({'message': 'Код отправлен', 'auth_code': auth_code}, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyAuthCodeView(APIView):
@@ -35,18 +35,26 @@ class VerifyAuthCodeView(APIView):
                 user, created = User.objects.get_or_create(phone_number=phone_number)
                 cache.delete(f'auth_code_{phone_number}')
                 login(request, user)
-                return Response({'error': 'Неверный код'}, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'Авторизация успешна'}, status=status.HTTP_200_OK)
+
+            return Response({'error': 'Неверный код'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
+
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data)
+
     def post(self, request):
+
         serializer = InviteActivationSerializer(data=request.data)
         if serializer.is_valid():
             invite_code = serializer.validated_data['invite_code']
+
             try:
                 invited_user = User.objects.get(invite_code=invite_code)
 
@@ -56,10 +64,11 @@ class UserProfileView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
+
                 request.user.activated_invite_code = invite_code
                 request.user.save()
 
-                return Response({'message': 'Инвайт-код успешно активирован'})
+                return Response({'message': 'Инвайт-код успешно активирован'}, status=status.HTTP_200_OK)
 
             except User.DoesNotExist:
                 return Response(
